@@ -1,0 +1,13 @@
+# Dossiers de compilation ROS
+build/
+devel/
+install/
+log/
+
+# Fichiers Python compilés
+*.pyc
+__pycache__/
+
+# Fichiers temporaires Linux
+*~
+.vscode/
