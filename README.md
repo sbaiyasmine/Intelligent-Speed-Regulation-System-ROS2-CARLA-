@@ -8,7 +8,7 @@ L’objectif principal est de reproduire un comportement réaliste de conduite a
 
 - de maintenir une vitesse de consigne,
 - d’adapter automatiquement la vitesse selon le trafic,
-- de détecter un véhicule à l’avant,
+- de détecter les véhicules situés à l’avant,
 - d’estimer le Time To Collision (TTC),
 - et d’appliquer automatiquement une commande d’accélération ou de freinage.
 
@@ -27,12 +27,12 @@ Le système combine :
 
 La plateforme embarquée utilisée dans le projet repose principalement sur :
 
-- Raspberry Pi 4
-- Encodeur IR
-- Driver moteur L298N
-- Moteur DC
-- Batterie externe
-- Communication TCP/IP avec ROS2
+- Raspberry Pi 4,
+- Encodeur IR,
+- Driver moteur L298N,
+- Moteur DC,
+- Batterie externe,
+- Communication TCP/IP avec ROS2.
 
 <img src="images/materiels.png" width="850">
 
@@ -42,40 +42,40 @@ La plateforme embarquée utilisée dans le projet repose principalement sur :
 
 L’architecture du système est composée de plusieurs modules :
 
-- Simulateur CARLA
-- Nœud ROS2 principal
-- Régulateur de vitesse
-- Détection du véhicule avant
-- Calcul TTC
-- Visualisation RViz2
-- Monitoring avec rqt_plot
+- Simulateur CARLA,
+- Nœud ROS2 principal,
+- Régulateur de vitesse,
+- Détection du véhicule avant,
+- Calcul TTC,
+- Visualisation RViz2,
+- Monitoring avec rqt_plot.
 
 Le système fonctionne en temps réel avec échange des données entre les différents nœuds ROS2.
 
 ---
 
-# Lancement de la Simulation CARLA
+# Environnement de Simulation CARLA
 
 Le simulateur CARLA permet de générer un environnement urbain réaliste avec trafic dynamique.
 
 La simulation fonctionne en mode synchrone avec un pas de temps fixe :
 
-\[
-dt = 0.05s
-\]
+$$
+dt = 0.05\,s
+$$
 
 <img src="images/lancement_carla.png" width="900">
 
 ---
 
-# Simulation CARLA
+# Simulation de Conduite Autonome
 
 Le véhicule autonome évolue dans un environnement urbain réaliste intégrant :
 
 - circulation dynamique,
 - véhicules environnants,
 - régulation intelligente,
-- changement de mode automatique.
+- changement automatique des modes de conduite.
 
 <img src="images/carla_simulation.png" width="900">
 
@@ -85,22 +85,22 @@ Le véhicule autonome évolue dans un environnement urbain réaliste intégrant 
 
 La vitesse du véhicule est calculée à partir des composantes de vitesse :
 
-\[
+$$
 v = \sqrt{v_x^2 + v_y^2 + v_z^2}
-\]
+$$
 
 L’accélération est estimée par :
 
-\[
+$$
 a = \frac{v(k)-v(k-1)}{dt}
-\]
+$$
 
 Les données surveillées comprennent :
 
-- vitesse véhicule,
+- vitesse du véhicule,
 - accélération,
 - position,
-- distance véhicule avant,
+- distance avec le véhicule avant,
 - throttle,
 - brake,
 - TTC.
@@ -111,7 +111,7 @@ Les données surveillées comprennent :
 
 Une phase expérimentale a été réalisée afin de mesurer l’accélération maximale du robot réel.
 
-Les données obtenues ont permis d’ajuster correctement le régulateur PID et les limites dynamiques du système.
+Les données obtenues ont permis d’ajuster correctement le régulateur PID ainsi que les limites dynamiques du système.
 
 <img src="images/mesure_acceleration.png" width="850">
 
@@ -121,15 +121,17 @@ Les données obtenues ont permis d’ajuster correctement le régulateur PID et 
 
 Le contrôle longitudinal du véhicule est assuré par un régulateur PID.
 
-Les équations du contrôleur sont :
+L’erreur de vitesse est définie par :
 
-\[
-erreur(t)=v_{consigne}-v(t)
-\]
+$$
+e(t)=v_{consigne}-v(t)
+$$
 
-\[
-commande = K_p e + K_i \int e(t)dt + K_d \frac{de}{dt}
-\]
+La commande appliquée est donnée par :
+
+$$
+commande = K_p e + K_i \int e(t)\,dt + K_d \frac{de}{dt}
+$$
 
 Les gains PID utilisés permettent :
 
@@ -153,9 +155,9 @@ Les critères utilisés sont :
 
 La distance relative est calculée par :
 
-\[
+$$
 d = \sqrt{dx^2 + dy^2 + dz^2}
-\]
+$$
 
 ---
 
@@ -163,27 +165,27 @@ d = \sqrt{dx^2 + dy^2 + dz^2}
 
 La vitesse relative est donnée par :
 
-\[
+$$
 v_{rel}=v_{ego}-v_{front}
-\]
+$$
 
 Le TTC est calculé par :
 
-\[
+$$
 TTC = \frac{d}{v_{ego}-v_{front}}
-\]
+$$
 
 Si :
 
-\[
+$$
 v_{rel}\leq0
-\]
+$$
 
 alors :
 
-\[
+$$
 TTC = \infty
-\]
+$$
 
 ---
 
@@ -193,9 +195,9 @@ TTC = \infty
 
 Lorsque aucun véhicule n’est détecté :
 
-\[
+$$
 a = 1.2(v_{consigne}-v)
-\]
+$$
 
 Le véhicule maintient automatiquement sa vitesse cible.
 
@@ -205,31 +207,15 @@ Le véhicule maintient automatiquement sa vitesse cible.
 
 Lorsqu’un véhicule est détecté à l’avant :
 
-\[
+$$
 v_{target}=min(v_{consigne},v_{front})
-\]
+$$
 
-\[
+$$
 a = 0.9(v_{target}-v)-0.18v_{rel}
-\]
+$$
 
 Le véhicule adapte automatiquement sa vitesse afin de conserver une distance de sécurité.
-
----
-
-# Communication ROS2
-
-Le système repose sur plusieurs topics ROS2 pour échanger les données en temps réel.
-
-## Principaux Topics
-
-| Topic | Description |
-|---|---|
-| `/vehicle_speed` | vitesse du véhicule |
-| `/vehicle_acceleration` | accélération |
-| `/distance_front` | distance véhicule avant |
-| `/ttc` | Time To Collision |
-| `/control_cmd` | commandes throttle/brake |
 
 ---
 
@@ -240,7 +226,7 @@ RViz2 permet :
 - la visualisation des données temps réel,
 - l’affichage du véhicule,
 - la supervision des topics ROS2,
-- et le suivi dynamique du système.
+- le suivi dynamique du système.
 
 <img src="images/visualisation_rviz.png" width="900">
 
@@ -253,7 +239,7 @@ L’outil rqt_plot est utilisé afin d’observer :
 - la vitesse simulée,
 - la vitesse réelle,
 - l’accélération,
-- et les transitions du système.
+- les transitions du système.
 
 <img src="images/rqt_plot.png" width="900">
 
@@ -267,17 +253,20 @@ Les essais réalisés montrent :
 - une bonne adaptation au trafic,
 - une estimation TTC fonctionnelle,
 - une communication ROS2 stable,
-- et une visualisation temps réel efficace.
+- une visualisation temps réel efficace.
 
 Le véhicule est capable de passer automatiquement entre les modes :
 
-- CRUISE
-- FOLLOW
+- CRUISE,
+- FOLLOW,
 
 selon les conditions de circulation.
 
 ---
 
+
+
+---
 
 # Technologies Utilisées
 
@@ -302,6 +291,4 @@ Le projet inclut :
 - communication ROS2,
 - visualisation RViz2,
 - monitoring temps réel,
-- et régulation intelligente de vitesse.
-
-```
+- régulation intelligente de vitesse.
